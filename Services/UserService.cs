@@ -6,7 +6,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using WebApi.Entities;
-using WebApi.Helpers;
 using WebApi.Models;
 
 public interface IUserService
@@ -24,11 +23,11 @@ public class UserService : IUserService
         new User { Id = 1, FirstName = "Test", LastName = "User", Username = "test", Password = "test" }
     };
 
-    private readonly AppSettings _appSettings;
+    private readonly IConfiguration _configuration;
 
-    public UserService(IOptions<AppSettings> appSettings)
+    public UserService(IConfiguration configuration)
     {
-        _appSettings = appSettings.Value;
+        _configuration = configuration;
     }
 
     public AuthenticateResponse Authenticate(AuthenticateRequest model)
@@ -39,7 +38,7 @@ public class UserService : IUserService
         if (user == null) return null;
 
         // authentication successful so generate jwt token
-        var token = generateJwtToken(user);
+        var token = GenerateJwtToken(user);
 
         return new AuthenticateResponse(user, token);
     }
@@ -56,11 +55,11 @@ public class UserService : IUserService
 
     // helper methods
 
-    private string generateJwtToken(User user)
+    private string GenerateJwtToken(User user)
     {
         // generate token that is valid for 7 days
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+        var key = Encoding.ASCII.GetBytes(_configuration["Secret"]);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()) }),

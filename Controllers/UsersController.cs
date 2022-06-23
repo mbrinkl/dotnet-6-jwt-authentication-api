@@ -1,7 +1,7 @@
 ﻿namespace WebApi.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Helpers;
 using WebApi.Models;
 using WebApi.Services;
 

@@ -1,4 +1,6 @@
-﻿using WebApi.Helpers;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,11 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
     services.AddCors();
     services.AddControllers();
 
-    // configure strongly typed settings object
-    services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
-
     // configure DI for application services
     services.AddScoped<IUserService, UserService>();
+
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(
+        options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Secret"])),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                // set clockskew to zero so tokens expire exactly at token expiration time (instead of 5 minutes later)
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+    services.AddAuthorization();
 }
 
 var app = builder.Build();
@@ -26,10 +40,10 @@ var app = builder.Build();
         .AllowAnyMethod()
         .AllowAnyHeader());
 
-    // custom jwt auth middleware
-    app.UseMiddleware<JwtMiddleware>();
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     app.MapControllers();
 }
 
-app.Run("http://localhost:4000");
+app.Run();
